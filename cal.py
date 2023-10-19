@@ -28,7 +28,7 @@ https://docs.python.org/3/library/venv.html
 def get_text(date: tuple):
         date_s = f'{date[0]}-{date[1]}-{date[2]}.txt'
         try:
-            with open('daily/'+date_s, 'r', encoding='utf-8') as file:
+            with open('C:/Users/Сашер/Desktop/daily/'+date_s, 'r', encoding='utf-8') as file:
                 out = file.read()
             file.close()
             return out

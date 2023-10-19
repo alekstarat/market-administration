@@ -13,16 +13,52 @@ from flet import (
     Card,
     transform,
     ElevatedButton,
+    IconButton
 )
+import flet as ft
+from datetime import datetime
+from database import Base
+import time
+from CONFIG import *
 
+
+def from_unix(time):
+    return datetime.utcfromtimestamp(time).strftime('%d-%m-%Y')
 
 class AnimatedCard(UserControl):
-    def __int__(self):
+    def __init__(self, operation_id, user_id, position_id, TIME):
         # List : ['Podonki', 'БананМанго', '400', '3']
 
-        super().__int__()
+        self.base = Base(BASE)
+        self.operation_id = operation_id
+        self.user_id = user_id
+        self.position_id = position_id
+        d = list(self.base.cur.execute(f"SELECT name, type FROM Liquids WHERE id = {position_id}"))[0]
+        self.username = list(self.base.cur.execute(f'SELECT username FROM TelegramUsers WHERE id = {self.user_id}'))[0][0]
+        self.base.con.close()
+        self.NAME = d[0]
+        self.TYPE = d[1]
+        
+        self.TIME = from_unix(TIME)
+        super().__init__()
 
     def build(self):
+        def on_click(e):
+            
+            base = Base(BASE)
+            if list(base.cur.execute(f"SELECT reservationCount FROM TelegramUsers WHERE id = {self.user_id}"))[0][0] > 0:
+                base.cur.execute(f"UPDATE TelegramUsers SET reservationCount = reservationCount - 1 WHERE id = {self.user_id}")
+                base.cur.execute(f"INSERT INTO Transactions VALUES ({self.operation_id}, {self.user_id}, {self.position_id}, {int(time.time())}, {list(base.cur.execute(f'SELECT price FROM Liquids WHERE id = {self.position_id}'))[0][0]})")
+                base.cur.execute(f"DELETE FROM Reservation WHERE operationID = {self.operation_id}")
+                base.con.commit()
+                base.con.close()
+                print('Продано!')
+                self.page.clean()
+                self.page.update()
+            else:
+                print('Забагал нахуй таблицу')
+            
+            
         self._icon_container_ = Container(
             width=200,
             height=100,
@@ -36,12 +72,8 @@ class AnimatedCard(UserControl):
                 alignment="center",
                 vertical_alignment="center",
                 controls=[
-                    Text(
-                        "Кол-во:\n     12",
-                        size=12,
-                        weight="w600",
-                        
-                    ),
+                    IconButton(icon=ft.icons.CHECK_BOX, bgcolor=ft.colors.GREEN_800, on_click=on_click)
+                    
                     
                 ],
             ),
@@ -62,9 +94,9 @@ class AnimatedCard(UserControl):
                 controls=[
                     Container(
                         padding=20,
-                        alignment=alignment.bottom_center,
+                        alignment=alignment.center,
                         content=Text(
-                            "Podonki v2",
+                            f"{self.NAME} {self.TYPE}",
                             color=colors.BLACK,
                             size=28,
                             weight="w800",
@@ -74,12 +106,22 @@ class AnimatedCard(UserControl):
                         padding=20,
                         alignment=alignment.top_center,
                         content=Text(
-                            "БананМанго",
+                            f"для @{self.username}",
                             color=colors.BLACK,
                             size=14,
                             weight="w500",
                         ),
                     ),
+                    Container(
+                        padding=20,
+                        alignment=alignment.bottom_center,
+                        content=Text(
+                            f'до {self.TIME}',
+                            color=colors.BLACK,
+                            size=14,
+                            weight="w300"
+                        )
+                    )
                 ],
             ),
         )
@@ -116,8 +158,8 @@ class AnimatedCard(UserControl):
 
         if e.data == "true":
 
-            for __ in range(20):
-                self.__card.elevation += 1
+            for __ in range(50):
+                self.__card.elevation += 2
                 self.__card.update()
 
             self._container.border = border.all(4, colors.BLUE_800)
@@ -128,8 +170,8 @@ class AnimatedCard(UserControl):
             self._icon_container_.update()
 
         else:
-            for __ in range(20):
-                self.__card.elevation -= 1
+            for __ in range(50):
+                self.__card.elevation -= 2
                 self.__card.update()
 
             self._container.border = border.all(4, colors.WHITE24)
