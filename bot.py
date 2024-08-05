@@ -7,7 +7,6 @@ from datetime import datetime
 
 
 #maxLen(InlineKeyboardButton) = 69
-# айди анасика - 493131120
 #69 - 5 - len(j[1]) - len(j[2]) - len(str(j[3])) = X + 5 + len(str(j[0]))
 # X = 59 - len(j[1]) - len(j[2]) - len(str(j[3])) = len(str(j[0]))
 
